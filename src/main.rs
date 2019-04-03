@@ -78,7 +78,7 @@ fn main() {
 
         // load models
         // -----------
-        let ourModel = Model::new("resources/objects/nanosuit/nanosuit.obj");
+        let ourModel = Model::new("resources/objects/rock/rock.obj");
 
         // draw in wireframe
         // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
@@ -130,7 +130,7 @@ fn main() {
             ourShader.setMat4(c_str!("view"), &view);
 
             // render the loaded model
-            let mut model = Matrix4::<f32>::from_translation(vec3(0.0, -1.75, 0.0)); // translate it down so it's at the center of the scene
+            let mut model = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
             model = model * Matrix4::from_scale(0.2); // it's a bit too big for our scene, so scale it down
             ourShader.setMat4(c_str!("model"), &model);
             ourModel.Draw(&ourShader);
