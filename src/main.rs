@@ -86,6 +86,7 @@ fn main() {
         (ourShader, ourModel)
     };
 
+    let mut x_pos = 0.0;
     // render loop
     // -----------
     while !window.should_close() {
@@ -130,7 +131,14 @@ fn main() {
             ourShader.setMat4(c_str!("view"), &view);
 
             // render the loaded model
-            let mut model = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
+
+            use glfw::{Action, Key};
+            if window.get_key(Key::L) == Action::Press {
+                x_pos += 0.1
+            } else if window.get_key(Key::H) == Action::Press {
+                x_pos -= 0.1
+            }
+            let mut model = Matrix4::<f32>::from_translation(vec3(x_pos, 0.0, 0.0));
             model = model * Matrix4::from_scale(0.2); // it's a bit too big for our scene, so scale it down
             ourShader.setMat4(c_str!("model"), &model);
             ourModel.Draw(&ourShader);
