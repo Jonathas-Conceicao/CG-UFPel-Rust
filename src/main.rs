@@ -3,7 +3,7 @@
 mod learn_opengl;
 
 use gl;
-use glfw::{self, Context};
+use glfw::{self, Action, Context, Key};
 
 use std::ffi::CStr;
 
@@ -80,13 +80,14 @@ fn main() {
         // -----------
         let ourModel = Model::new("resources/objects/rock/rock.obj");
 
-        // draw in wireframe
-        // gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
-
         (ourShader, ourModel)
     };
 
     let mut x_pos = 0.0;
+    let mut z_pos = 0.0;
+    let mut rotate = 0.0;
+    let mut is_moving = false;
+    let mut was_moving;
     // render loop
     // -----------
     while !window.should_close() {
@@ -130,17 +131,55 @@ fn main() {
             ourShader.setMat4(c_str!("projection"), &projection);
             ourShader.setMat4(c_str!("view"), &view);
 
-            // render the loaded model
-
-            use glfw::{Action, Key};
-            if window.get_key(Key::L) == Action::Press {
-                x_pos += 0.1
-            } else if window.get_key(Key::H) == Action::Press {
-                x_pos -= 0.1
+            // draw in wireframe
+            if window.get_key(Key::T) == Action::Press {
+                gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE);
+            } else {
+                gl::PolygonMode(gl::FRONT_AND_BACK, gl::FILL);
             }
-            let mut model = Matrix4::<f32>::from_translation(vec3(x_pos, 0.0, 0.0));
-            model = model * Matrix4::from_scale(0.2); // it's a bit too big for our scene, so scale it down
-            ourShader.setMat4(c_str!("model"), &model);
+
+            was_moving = is_moving;
+            is_moving = false;
+
+            let angle = cgmath::dot(vec3(x_pos, 1.0, 1.0), vec3(1.0, 1.0, z_pos));
+            rotate += (10.0 * deltaTime) % 360.0;
+            let rot = Matrix4::<f32>::from_angle_y(cgmath::Deg(rotate));
+
+            // render the loaded model 1
+            if window.get_key(Key::L) == Action::Press {
+                x_pos += 0.4 * deltaTime;
+                is_moving = true;
+            } else if window.get_key(Key::H) == Action::Press {
+                x_pos -= 0.4 * deltaTime;
+                is_moving = true;
+            }
+            let mut model1 = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
+            model1 = model1 * Matrix4::<f32>::from_translation(vec3(x_pos, 0.0, 0.0));
+            model1 = model1 * Matrix4::from_translation(vec3(0.0, 0.0, -1.0));
+            model1 = model1 * Matrix4::from_scale(0.2);
+            model1 = model1 * rot;
+
+            // render the loaded model 2
+            if window.get_key(Key::O) == Action::Press {
+                z_pos += 0.4 * deltaTime;
+                is_moving = true;
+            } else if window.get_key(Key::Y) == Action::Press {
+                z_pos -= 0.4 * deltaTime;
+                is_moving = true;
+            }
+            let mut model2 = Matrix4::<f32>::from_translation(vec3(0.0, 0.0, 0.0));
+            model2 = model2 * Matrix4::from_translation(vec3(0.0, 0.0, z_pos));
+            model2 = model2 * Matrix4::from_translation(vec3(0.0, 0.0, -1.0));
+            model2 = model2 * Matrix4::from_scale(0.2);
+            model2 = model2 * rot;
+
+            if was_moving && !is_moving {
+                println!("{}", angle);
+            }
+
+            ourShader.setMat4(c_str!("model"), &model1);
+            ourModel.Draw(&ourShader);
+            ourShader.setMat4(c_str!("model"), &model2);
             ourModel.Draw(&ourShader);
         }
 
