@@ -1,24 +1,19 @@
-#![allow(non_snake_case)]
-#![allow(dead_code)]
-
-use std::{os::raw::c_void, path::Path};
-
-use cgmath::{vec2, vec3};
-use gl;
-use image::{self, DynamicImage::*, GenericImage};
-use tobj;
-
 use super::{
     mesh::{Mesh, Texture, Vertex},
     shader::Shader,
 };
 
+use gl;
+
+use cgmath::{vec2, vec3};
+use image::{self, DynamicImage::*, GenericImage};
+use std::{os::raw::c_void, path::Path};
+use tobj;
+
 #[derive(Default)]
 pub struct Model {
-    /* Model Data */
     pub meshes: Vec<Mesh>,
-    pub textures_loaded: Vec<Texture>, /* stores all the textures loaded so far, optimization to
-                                        * make sure textures aren't loaded more than once. */
+    pub textures_loaded: Vec<Texture>,
     directory: String,
 }
 
@@ -26,20 +21,20 @@ impl Model {
     /// constructor, expects a filepath to a 3D model.
     pub fn new(path: &str) -> Model {
         let mut model = Model::default();
-        model.loadModel(path);
+        model.load_model(path);
         model
     }
 
-    pub fn Draw(&self, shader: &Shader) {
+    pub fn draw(&self, shader: &Shader) {
         for mesh in &self.meshes {
             unsafe {
-                mesh.Draw(shader);
+                mesh.draw(shader);
             }
         }
     }
 
     // loads a model from file and stores the resulting meshes in the meshes vector.
-    fn loadModel(&mut self, path: &str) {
+    fn load_model(&mut self, path: &str) {
         let path = Path::new(path);
 
         // retrieve the directory path of the filepath
@@ -63,9 +58,9 @@ impl Model {
             let (p, n, t) = (&mesh.positions, &mesh.normals, &mesh.texcoords);
             for i in 0..num_vertices {
                 vertices.push(Vertex {
-                    Position: vec3(p[i * 3], p[i * 3 + 1], p[i * 3 + 2]),
-                    Normal: vec3(n[i * 3], n[i * 3 + 1], n[i * 3 + 2]),
-                    TexCoords: vec2(t[i * 2], t[i * 2 + 1]),
+                    position: vec3(p[i * 3], p[i * 3 + 1], p[i * 3 + 2]),
+                    normal: vec3(n[i * 3], n[i * 3 + 1], n[i * 3 + 2]),
+                    tex_coords: vec2(t[i * 2], t[i * 2 + 1]),
                     ..Vertex::default()
                 })
             }
@@ -78,19 +73,19 @@ impl Model {
                 // 1. diffuse map
                 if !material.diffuse_texture.is_empty() {
                     let texture =
-                        self.loadMaterialTexture(&material.diffuse_texture, "texture_diffuse");
+                        self.load_material_texture(&material.diffuse_texture, "texture_diffuse");
                     textures.push(texture);
                 }
                 // 2. specular map
                 if !material.specular_texture.is_empty() {
                     let texture =
-                        self.loadMaterialTexture(&material.specular_texture, "texture_specular");
+                        self.load_material_texture(&material.specular_texture, "texture_specular");
                     textures.push(texture);
                 }
                 // 3. normal map
                 if !material.normal_texture.is_empty() {
                     let texture =
-                        self.loadMaterialTexture(&material.normal_texture, "texture_normal");
+                        self.load_material_texture(&material.normal_texture, "texture_normal");
                     textures.push(texture);
                 }
                 // NOTE: no height maps
@@ -100,7 +95,7 @@ impl Model {
         }
     }
 
-    fn loadMaterialTexture(&mut self, path: &str, typeName: &str) -> Texture {
+    fn load_material_texture(&mut self, path: &str, type_name: &str) -> Texture {
         {
             let texture = self.textures_loaded.iter().find(|t| t.path == path);
             if let Some(texture) = texture {
@@ -109,8 +104,8 @@ impl Model {
         }
 
         let texture = Texture {
-            id: unsafe { TextureFromFile(path, &self.directory) },
-            type_: typeName.into(),
+            id: unsafe { texture_form_file(path, &self.directory) },
+            type_: type_name.into(),
             path: path.into(),
         };
         self.textures_loaded.push(texture.clone());
@@ -118,11 +113,11 @@ impl Model {
     }
 }
 
-unsafe fn TextureFromFile(path: &str, directory: &str) -> u32 {
+unsafe fn texture_form_file(path: &str, directory: &str) -> u32 {
     let filename = format!("{}/{}", directory, path);
 
-    let mut textureID = 0;
-    gl::GenTextures(1, &mut textureID);
+    let mut id = 0;
+    gl::GenTextures(1, &mut id);
 
     let img = image::open(&Path::new(&filename)).expect("Texture failed to load");
     let format = match img {
@@ -134,7 +129,7 @@ unsafe fn TextureFromFile(path: &str, directory: &str) -> u32 {
 
     let data = img.raw_pixels();
 
-    gl::BindTexture(gl::TEXTURE_2D, textureID);
+    gl::BindTexture(gl::TEXTURE_2D, id);
     gl::TexImage2D(
         gl::TEXTURE_2D,
         0,
@@ -157,5 +152,5 @@ unsafe fn TextureFromFile(path: &str, directory: &str) -> u32 {
     );
     gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::LINEAR as i32);
 
-    textureID
+    id
 }
