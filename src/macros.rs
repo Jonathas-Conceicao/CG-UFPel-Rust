@@ -13,3 +13,9 @@ macro_rules! offset_of {
         &(*(ptr::null() as *const $ty)).$field as *const _ as usize
     };
 }
+
+macro_rules! process_keys {
+    ($window:expr; $( $key:expr, $mode:expr => $code:block ),+) => {
+        $( if $window.get_key($key) == $mode { $code } )*
+    };
+}

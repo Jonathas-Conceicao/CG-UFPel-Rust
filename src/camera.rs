@@ -1,3 +1,5 @@
+use crate::scene::SceneObject;
+
 use cgmath::{
     self,
     prelude::{InnerSpace, Zero},
@@ -58,6 +60,23 @@ impl Default for Camera {
         };
         camera.update_camera_vectors();
         camera
+    }
+}
+
+impl SceneObject for Camera {
+    fn process_input(&mut self, window: &glfw::Window, delta_time: f32) {
+        if window.get_key(glfw::Key::Up) == glfw::Action::Press {
+            self.process_keyboard(FORWARD, delta_time);
+        }
+        if window.get_key(glfw::Key::Down) == glfw::Action::Press {
+            self.process_keyboard(BACKWARD, delta_time);
+        }
+        if window.get_key(glfw::Key::Left) == glfw::Action::Press {
+            self.process_keyboard(LEFT, delta_time);
+        }
+        if window.get_key(glfw::Key::Right) == glfw::Action::Press {
+            self.process_keyboard(RIGHT, delta_time);
+        }
     }
 }
 

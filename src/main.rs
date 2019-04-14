@@ -9,12 +9,17 @@ use structopt::StructOpt;
     about = "OpenGL project in Rust"
 )]
 struct Opt {
-    #[structopt(short = "m", long = "models")]
+    #[structopt(short = "m", long = "models", default_value = "1")]
     n_models: usize,
 }
 
+const SCR_WIDTH: u32 = 800;
+const SCR_HEIGHT: u32 = 600;
+
 pub fn run() -> Result<(), failure::Error> {
-    cg_ufpel_project::run()
+    let opt = Opt::from_args();
+    let mut scene = cg_ufpel_project::Scene::init(SCR_WIDTH, SCR_HEIGHT, opt.n_models)?;
+    scene.run()
 }
 
 fn main() {

@@ -1,11 +1,13 @@
+#![allow(dead_code)]
+
 #[macro_use]
 mod macros;
 
-pub mod camera;
-pub mod common;
-pub mod mesh;
-pub mod model;
-pub mod scene;
-pub mod shader;
+pub(crate) mod camera;
+pub(crate) mod mesh;
+pub(crate) mod model;
+pub(crate) mod model_pos;
+pub(crate) mod scene;
+pub(crate) mod shader;
 
-pub use scene::run;
+pub use scene::Scene;
