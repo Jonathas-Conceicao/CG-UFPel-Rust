@@ -170,9 +170,7 @@ impl Scene {
 
         process_keys!(
             self.window;
-            glfw::Key::Escape, glfw::Action::Press => {
-                self.window.set_should_close(true);
-            },
+            glfw::Key::Escape, glfw::Action::Press => self.window.set_should_close(true),
             glfw::Key::T, glfw::Action::Press => {
                 // draw in wireframe
                 unsafe{gl::PolygonMode(gl::FRONT_AND_BACK, gl::LINE)};

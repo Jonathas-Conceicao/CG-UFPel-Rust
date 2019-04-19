@@ -15,7 +15,13 @@ macro_rules! offset_of {
 }
 
 macro_rules! process_keys {
-    ($window:expr; $( $key:expr, $mode:expr => $code:block ),+) => {
+    ($window:expr; $( $key:expr, $mode:expr => $code:expr ),+) => {
         $( if $window.get_key($key) == $mode { $code } )*
+    };
+    ($window:expr; $( $key:expr, $mode:expr => $code:expr, $shift:expr ),+) => {
+        $( if $window.get_key($key) == $mode {
+            if $window.get_key(glfw::Key::LeftShift) == glfw::Action::Press { $shift }
+            else { $code }
+        })*
     };
 }

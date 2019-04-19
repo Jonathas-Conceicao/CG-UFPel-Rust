@@ -12,6 +12,7 @@ gl = "0.10"
 glfw = "0.23"
 image = "0.19"
 num = "0.2"
+splines = { version = "0.2", features = ["impl-cgmath"] }
 structopt = "0.2"
 rand = "0.5"
 tobj = "0.1"
