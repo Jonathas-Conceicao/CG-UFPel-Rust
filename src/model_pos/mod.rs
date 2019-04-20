@@ -10,6 +10,7 @@ use glfw;
 
 const BASE_SPEED: f32 = 8.;
 const ROT_SPEED: f32 = 30.;
+const SCALE_SPEED: f32 = 2.;
 
 #[derive(Clone, Debug)]
 pub struct ModelPosition {
@@ -39,6 +40,14 @@ impl ModelPosition {
         let smat = Matrix4::from_scale(self.scale);
         let rmat = Matrix4::from(self.rotation);
         tmat * smat * rmat
+    }
+
+    fn scale_up(&mut self, delta_time: f32) {
+        self.scale += SCALE_SPEED * delta_time;
+    }
+
+    fn scale_down(&mut self, delta_time: f32) {
+        self.scale -= SCALE_SPEED * delta_time;
     }
 
     fn slide(&mut self, direction: Movement, delta_time: f32) {
@@ -120,6 +129,9 @@ impl SceneObject for ModelPosition {
         glfw::Key::E, glfw::Action::Press =>
                 self.slide(Movement::BackwardY, delta_time),
                 self.slide_curve(Movement::BackwardY, delta_time),
+        glfw::Key::R, glfw::Action::Press =>
+                self.scale_up(delta_time),
+                self.scale_down(delta_time),
         glfw::Key::Z, glfw::Action::Press =>
                 self.rotate(Movement::ForwardZ, delta_time),
                 self.rotate(Movement::BackwardZ, delta_time),
