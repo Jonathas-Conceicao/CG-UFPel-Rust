@@ -34,7 +34,7 @@ impl Scene {
         );
 
         let camera = Camera {
-            position: Point3::new(0.0, 1.0, 20.0),
+            position: Point3::new(0., 1., 20.),
             ..Camera::default()
         };
 
@@ -82,12 +82,12 @@ impl Scene {
             (our_shader, our_model)
         };
 
-        let mut x_offset = 0.0;
+        let mut x_offset = 0.;
         let mut models: Vec<_> = std::iter::repeat(ModelPosition::default())
             .take(n_models)
             .map(|mut m| {
-                m.pos.x = x_offset;
-                x_offset += 2.0;
+                m.translation.x = x_offset;
+                x_offset += 2.;
                 m
             })
             .collect();
@@ -111,12 +111,12 @@ impl Scene {
     pub fn run(&mut self) -> Result<(), failure::Error> {
         // Camera data
         let mut first_mouse = true;
-        let mut last_x: f32 = self.wscreen as f32 / 2.0;
-        let mut last_y: f32 = self.hscreen as f32 / 2.0;
+        let mut last_x: f32 = self.wscreen as f32 / 2.;
+        let mut last_y: f32 = self.hscreen as f32 / 2.;
 
         // timing
         let mut delta_time: f32; // time between current frame and last frame
-        let mut last_frame: f32 = 0.0;
+        let mut last_frame: f32 = 0.;
 
         // don't forget to enable shader before setting uniforms
         unsafe { self.shader.use_program() };
@@ -135,7 +135,7 @@ impl Scene {
             self.process_input(delta_time);
 
             unsafe {
-                gl::ClearColor(0.1, 0.1, 0.1, 1.0);
+                gl::ClearColor(0.1, 0.1, 0.1, 1.);
                 gl::Clear(gl::COLOR_BUFFER_BIT | gl::DEPTH_BUFFER_BIT);
 
                 // view/projection transformations
@@ -143,7 +143,7 @@ impl Scene {
                     Deg(self.camera.zoom),
                     self.wscreen as f32 / self.hscreen as f32,
                     0.1,
-                    100.0,
+                    100.,
                 );
                 let view = self.camera.get_view_matrix();
                 self.shader.set_mat4(c_str!("projection"), &projection);

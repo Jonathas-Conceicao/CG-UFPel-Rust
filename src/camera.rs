@@ -22,11 +22,11 @@ pub enum CameraMovement {
 use self::CameraMovement::*;
 
 // Default camera values
-const YAW: f32 = -90.0;
-const PITCH: f32 = 0.0;
-const SPEED: f32 = 2.5;
+const YAW: f32 = -90.;
+const PITCH: f32 = 0.;
+const SPEED: f32 = 8.;
 const SENSITIVTY: f32 = 0.1;
-const ZOOM: f32 = 45.0;
+const ZOOM: f32 = 45.;
 
 pub struct Camera {
     // Camera Attributes
@@ -47,8 +47,8 @@ pub struct Camera {
 impl Default for Camera {
     fn default() -> Camera {
         let mut camera = Camera {
-            position: Point3::new(0.0, 0.0, 0.0),
-            front: vec3(0.0, 0.0, -1.0),
+            position: Point3::new(0., 0., 0.),
+            front: vec3(0., 0., -1.),
             up: Vector3::zero(),    // initialized later
             right: Vector3::zero(), // initialized later
             world_up: Vector3::unit_y(),
@@ -122,11 +122,11 @@ impl Camera {
 
         // Make sure that when pitch is out of bounds, screen doesn't get flipped
         if constrain_pitch {
-            if self.pitch > 89.0 {
-                self.pitch = 89.0;
+            if self.pitch > 89. {
+                self.pitch = 89.;
             }
-            if self.pitch < -89.0 {
-                self.pitch = -89.0;
+            if self.pitch < -89. {
+                self.pitch = -89.;
             }
         }
 
@@ -137,14 +137,14 @@ impl Camera {
     // Processes input received from a mouse scroll-wheel event. Only requires input
     // on the vertical wheel-axis
     pub fn process_mouse_scroll(&mut self, yoffset: f32) {
-        if self.zoom >= 1.0 && self.zoom <= 45.0 {
+        if self.zoom >= 1. && self.zoom <= 45. {
             self.zoom -= yoffset;
         }
-        if self.zoom <= 1.0 {
-            self.zoom = 1.0;
+        if self.zoom <= 1. {
+            self.zoom = 1.;
         }
-        if self.zoom >= 45.0 {
-            self.zoom = 45.0;
+        if self.zoom >= 45. {
+            self.zoom = 45.;
         }
     }
 

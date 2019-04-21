@@ -5,7 +5,7 @@ use crate::scene::SceneObject;
 use animation::Animation;
 use curve::CurveControl;
 
-use cgmath::{vec3, Deg, Euler, Matrix4, Vector3};
+use cgmath::{vec3, Deg, Matrix4, Quaternion, Rotation3, Vector3};
 use glfw;
 
 const BASE_SPEED: f32 = 8.;
@@ -14,9 +14,9 @@ const SCALE_SPEED: f32 = 2.;
 
 #[derive(Clone, Debug)]
 pub struct ModelPosition {
-    pub pos: Vector3<f32>,
+    pub orientation: Quaternion<f32>,
+    pub translation: Vector3<f32>,
     pub scale: f32,
-    pub rotation: Euler<Deg<f32>>,
     pub is_selected: bool,
 
     curve: CurveControl,
@@ -36,10 +36,10 @@ enum Movement {
 
 impl ModelPosition {
     pub fn matrix(&self) -> Matrix4<f32> {
-        let tmat = Matrix4::from_translation(self.pos);
+        let tmat = Matrix4::from_translation(self.translation);
         let smat = Matrix4::from_scale(self.scale);
-        let rmat = Matrix4::from(self.rotation);
-        tmat * smat * rmat
+        let omat = Matrix4::from(self.orientation);
+        tmat * omat * smat
     }
 
     fn scale_up(&mut self, delta_time: f32) {
@@ -53,43 +53,40 @@ impl ModelPosition {
     fn slide(&mut self, direction: Movement, delta_time: f32) {
         let step = BASE_SPEED * delta_time;
         match direction {
-            Movement::ForwardX => self.pos.x += step,
-            Movement::BackwardX => self.pos.x -= step,
-            Movement::ForwardY => self.pos.y += step,
-            Movement::BackwardY => self.pos.y -= step,
-            Movement::ForwardZ => self.pos.z += step,
-            Movement::BackwardZ => self.pos.z -= step,
+            Movement::ForwardX => self.translation.x += step,
+            Movement::BackwardX => self.translation.x -= step,
+            Movement::ForwardY => self.translation.y += step,
+            Movement::BackwardY => self.translation.y -= step,
+            Movement::ForwardZ => self.translation.z += step,
+            Movement::BackwardZ => self.translation.z -= step,
         }
         self.curve.reset();
     }
 
     fn rotate(&mut self, direction: Movement, delta_time: f32) {
         let step = Deg(ROT_SPEED * delta_time);
-        match direction {
-            Movement::ForwardX => self.rotation.x += step,
-            Movement::BackwardX => self.rotation.x -= step,
-            Movement::ForwardY => self.rotation.y += step,
-            Movement::BackwardY => self.rotation.y -= step,
-            Movement::ForwardZ => self.rotation.z += step,
-            Movement::BackwardZ => self.rotation.z -= step,
-        }
+        let rot = match direction {
+            Movement::ForwardX => Quaternion::from_angle_x(step),
+            Movement::BackwardX => Quaternion::from_angle_x(-step),
+            Movement::ForwardY => Quaternion::from_angle_y(step),
+            Movement::BackwardY => Quaternion::from_angle_y(-step),
+            Movement::ForwardZ => Quaternion::from_angle_z(step),
+            Movement::BackwardZ => Quaternion::from_angle_z(-step),
+        };
+        self.orientation = self.orientation * rot;
     }
 
     fn slide_curve(&mut self, direction: Movement, delta_time: f32) {
-        self.pos = self.curve.slide(self.pos, direction, delta_time);
+        self.translation = self.curve.slide(self.translation, direction, delta_time);
     }
 }
 
 impl Default for ModelPosition {
     fn default() -> Self {
         ModelPosition {
-            pos: vec3(0.0, 0.0, 0.0),
-            scale: 1.0,
-            rotation: Euler {
-                x: Deg(0.0),
-                y: Deg(0.0),
-                z: Deg(0.0),
-            },
+            orientation: Quaternion::from_sv(1., vec3(0., 0., 0.)),
+            translation: vec3(0., 0., 0.),
+            scale: 1.,
             is_selected: false,
 
             debug_pressed: false,

@@ -71,12 +71,12 @@ impl CurveControl {
             Movement::BackwardZ => vec3(p0.x, p0.y, p0.z - MAIN_DEVIATION),
         };
 
-        self.step = 0.0;
+        self.step = 0.;
         self.should_reset = false;
         self.direction = direction;
         self.spline = Spline::from_vec(vec![
             Key::new(-99.9, *p0, Interpolation::CatmullRom),
-            Key::new(0.0, *p0, Interpolation::CatmullRom),
+            Key::new(0., *p0, Interpolation::CatmullRom),
             Key::new(TIME * 0.333, p1, Interpolation::CatmullRom),
             Key::new(TIME * 0.666, p2, Interpolation::CatmullRom),
             Key::new(TIME, p3, Interpolation::CatmullRom),
