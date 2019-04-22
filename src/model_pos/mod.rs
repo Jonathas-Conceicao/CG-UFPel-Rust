@@ -5,7 +5,7 @@ use crate::scene::SceneObject;
 use animation::Animation;
 use curve::CurveControl;
 
-use cgmath::{vec3, Deg, Matrix4, Quaternion, Rotation3, Vector3};
+use cgmath::{vec3, Deg, Matrix4, Quaternion, Rotation, Rotation3, Vector3};
 use glfw;
 
 const BASE_SPEED: f32 = 8.;
@@ -37,8 +37,8 @@ enum Movement {
 impl ModelPosition {
     pub fn matrix(&self) -> Matrix4<f32> {
         let tmat = Matrix4::from_translation(self.translation);
-        let smat = Matrix4::from_scale(self.scale);
         let omat = Matrix4::from(self.orientation);
+        let smat = Matrix4::from_scale(self.scale);
         tmat * omat * smat
     }
 
@@ -74,6 +74,20 @@ impl ModelPosition {
             Movement::BackwardZ => Quaternion::from_angle_z(-step),
         };
         self.orientation = self.orientation * rot;
+    }
+
+    fn rotate_around(&mut self, p: Vector3<f32>, delta_time: f32) {
+        let rot = Quaternion::from_angle_y(Deg(ROT_SPEED * 2. * delta_time));
+        self.translation = rot * (self.translation - p) + p;
+    }
+
+    fn look_at(&mut self, p: Vector3<f32>, up: Vector3<f32>, delta_time: f32) {
+        // Base case to avoid NaN
+        if p.x == 0. && p.y == 0. && p.z == 0. {
+            return;
+        }
+        let rot = Quaternion::look_at(p, up);
+        self.orientation = self.orientation.nlerp(rot, delta_time);
     }
 
     fn slide_curve(&mut self, direction: Movement, delta_time: f32) {
@@ -129,6 +143,9 @@ impl SceneObject for ModelPosition {
         glfw::Key::R, glfw::Action::Press =>
                 self.scale_up(delta_time),
                 self.scale_down(delta_time),
+        glfw::Key::V, glfw::Action::Press =>
+                self.rotate_around(vec3(0.,0.,0.), delta_time),
+                self.rotate_around(vec3(5.,0.,0.), delta_time),
         glfw::Key::Z, glfw::Action::Press =>
                 self.rotate(Movement::ForwardZ, delta_time),
                 self.rotate(Movement::BackwardZ, delta_time),
