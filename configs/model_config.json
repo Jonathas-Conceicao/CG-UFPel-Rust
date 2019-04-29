@@ -1,6 +1,12 @@
 {
     "base_speed": 8.0,
     "rotation_speed": 30.0,
-    "circle_speed": 60.0,
-    "scale_speed": 2.0
+    "circle_speed": 50.0,
+    "scale_speed": 2.0,
+
+    "command_list":
+      [ ["ScaleU",  0.2]
+      , ["SlideXF", 0.5]
+      , ["SlideZB", 0.5]
+      ]
 }

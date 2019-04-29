@@ -1,3 +1,5 @@
+use super::Command;
+
 use failure::format_err;
 use serde::Deserialize;
 use serde_json;
@@ -14,6 +16,8 @@ pub struct Configuration {
     pub rotation_speed: f32,
     pub circle_speed: f32,
     pub scale_speed: f32,
+
+    pub command_list: Vec<(Command, f32)>,
 }
 
 impl Default for Configuration {
@@ -23,6 +27,8 @@ impl Default for Configuration {
             rotation_speed: ROTATION_SPEED,
             circle_speed: CIRCLE_SPEED,
             scale_speed: SCALE_SPEED,
+
+            command_list: Vec::default(),
         }
     }
 }
@@ -53,13 +59,25 @@ mod test {
                 rotation_speed: 15.,
                 circle_speed: 30.,
                 scale_speed: 2.,
+
+                command_list: vec!(
+                    (Command::ScaleU, 0.5),
+                    (Command::SlideXF, 0.5),
+                    (Command::SlideZB, 0.5)
+                )
             },
-            serde_json::from_value(json!({
+            serde_json::from_value(dbg!(json!({
                 "base_speed": 4.0,
                 "rotation_speed": 15.0,
                 "circle_speed": 30.0,
                 "scale_speed": 2.0,
-            }))
+
+                "command_list": [
+                    ("ScaleU",  0.5),
+                    ("SlideXF", 0.5),
+                    ("SlideZB", 0.5),
+                ]
+            })))
             .unwrap()
         );
     }

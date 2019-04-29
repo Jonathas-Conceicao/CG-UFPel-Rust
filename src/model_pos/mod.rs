@@ -10,6 +10,7 @@ use crate::scene::SceneObject;
 use animation::Animation;
 pub use config::Configuration;
 use curve::CurveControl;
+use serde::Deserialize;
 
 #[derive(Clone, Debug)]
 pub struct ModelPosition {
@@ -32,6 +33,26 @@ pub enum Movement {
     BackwardY,
     ForwardZ,
     BackwardZ,
+}
+
+#[derive(Copy, Clone, Debug, Deserialize, PartialEq)]
+pub enum Command {
+    ScaleU,
+    ScaleD,
+
+    SlideXF,
+    SlideXB,
+    SlideYF,
+    SlideYB,
+    SlideZF,
+    SlideZB,
+
+    RotateXF,
+    RotateXB,
+    RotateYF,
+    RotateYB,
+    RotateZF,
+    RotateZB,
 }
 
 impl Default for ModelPosition {
@@ -127,12 +148,36 @@ impl ModelPosition {
     pub fn slide_curve(&mut self, direction: Movement, delta_time: f32) {
         self.translation = self.curve.slide(self.translation, direction, delta_time);
     }
+
+    pub fn run_command(&mut self, c: Command, delta_time: f32) {
+        match dbg!(c) {
+            Command::ScaleU => self.scale_up(delta_time),
+            Command::ScaleD => self.scale_down(delta_time),
+
+            Command::SlideXF => self.slide(Movement::ForwardX, delta_time),
+            Command::SlideXB => self.slide(Movement::BackwardX, delta_time),
+            Command::SlideYF => self.slide(Movement::ForwardY, delta_time),
+            Command::SlideYB => self.slide(Movement::BackwardY, delta_time),
+            Command::SlideZF => self.slide(Movement::ForwardZ, delta_time),
+            Command::SlideZB => self.slide(Movement::BackwardZ, delta_time),
+
+            Command::RotateXF => self.rotate(Movement::ForwardX, delta_time),
+            Command::RotateXB => self.rotate(Movement::BackwardX, delta_time),
+            Command::RotateYF => self.rotate(Movement::ForwardY, delta_time),
+            Command::RotateYB => self.rotate(Movement::BackwardY, delta_time),
+            Command::RotateZF => self.rotate(Movement::ForwardZ, delta_time),
+            Command::RotateZB => self.rotate(Movement::BackwardZ, delta_time),
+        };
+    }
 }
 
 impl SceneObject for ModelPosition {
     fn process_input(&mut self, window: &glfw::Window, delta_time: f32) {
         if self.animation.is_running {
-            unimplemented!("TODO: FIXME: Handle animations");
+            for (c, t) in self.animation.step(delta_time) {
+                self.run_command(c, t);
+            }
+            return;
         }
 
         if !self.is_selected {
@@ -181,6 +226,7 @@ impl SceneObject for ModelPosition {
 
         process_keys!(
         window;
+        glfw::Key::H, glfw::Action::Press => self.animation.start(self.config.command_list.clone()),
         glfw::Key::F, glfw::Action::Release => self.debug_pressed = false,
         glfw::Key::F, glfw::Action::Press => {
             if self.debug_pressed == false {
