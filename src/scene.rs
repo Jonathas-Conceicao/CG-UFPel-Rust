@@ -3,7 +3,7 @@ use crate::{camera::Camera, model::Model, model_pos::ModelPosition, shader::Shad
 use gl;
 use glfw::{self, Context};
 
-use cgmath::{perspective, Deg, Matrix4, Point3};
+use cgmath::{perspective, vec3, Deg, Matrix4};
 use failure::ensure;
 
 use std::{path::Path, sync::mpsc::Receiver};
@@ -44,10 +44,8 @@ impl Scene {
             "Number of models should be bigger than 0 and lower than 10"
         );
 
-        let camera = Camera {
-            position: Point3::new(0., 1., 20.),
-            ..Camera::default()
-        };
+        let mut camera = Camera::default();
+        camera.model_pos.translation = vec3(0., 1., 20.);
 
         // glfw: initialize and configure
         // ------------------------------

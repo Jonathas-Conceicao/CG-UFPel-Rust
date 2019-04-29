@@ -1,4 +1,4 @@
-use cgmath::{vec3, Deg, Matrix4, Quaternion, Rotation, Rotation3, Vector3};
+use cgmath::{vec3, Deg, InnerSpace, Matrix4, Quaternion, Rotation, Rotation3, Vector3};
 use glfw;
 use std::path::Path;
 
@@ -25,7 +25,7 @@ pub struct ModelPosition {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-enum Movement {
+pub enum Movement {
     ForwardX,
     BackwardX,
     ForwardY,
@@ -68,15 +68,15 @@ impl ModelPosition {
         tmat * omat * smat
     }
 
-    fn scale_up(&mut self, delta_time: f32) {
+    pub fn scale_up(&mut self, delta_time: f32) {
         self.scale += self.config.scale_speed * delta_time;
     }
 
-    fn scale_down(&mut self, delta_time: f32) {
+    pub fn scale_down(&mut self, delta_time: f32) {
         self.scale -= self.config.scale_speed * delta_time;
     }
 
-    fn slide(&mut self, direction: Movement, delta_time: f32) {
+    pub fn slide(&mut self, direction: Movement, delta_time: f32) {
         let step = self.config.base_speed * delta_time;
         match direction {
             Movement::ForwardX => self.translation.x += step,
@@ -89,7 +89,7 @@ impl ModelPosition {
         self.curve.reset();
     }
 
-    fn rotate(&mut self, direction: Movement, delta_time: f32) {
+    pub fn rotate(&mut self, direction: Movement, delta_time: f32) {
         let step = Deg(self.config.rotation_speed * delta_time);
         let rot = match direction {
             Movement::ForwardX => Quaternion::from_angle_x(step),
@@ -102,21 +102,29 @@ impl ModelPosition {
         self.orientation = self.orientation * rot;
     }
 
-    fn rotate_around(&mut self, p: Vector3<f32>, delta_time: f32) {
-        let rot = Quaternion::from_angle_y(Deg(self.config.circle_speed * delta_time));
+    pub fn rotate_around(&mut self, direction: Movement, p: Vector3<f32>, delta_time: f32) {
+        let step = Deg(self.config.circle_speed * delta_time);
+        let rot = match direction {
+            Movement::ForwardX => Quaternion::from_angle_x(step),
+            Movement::BackwardX => Quaternion::from_angle_x(-step),
+            Movement::ForwardY => Quaternion::from_angle_y(step),
+            Movement::BackwardY => Quaternion::from_angle_y(-step),
+            Movement::ForwardZ => Quaternion::from_angle_z(step),
+            Movement::BackwardZ => Quaternion::from_angle_z(-step),
+        };
         self.translation = rot * (self.translation - p) + p;
+        self.curve.reset();
     }
 
-    fn look_at(&mut self, p: Vector3<f32>, up: Vector3<f32>, delta_time: f32) {
-        // Base case to avoid NaN
-        if p.x == 0. && p.y == 0. && p.z == 0. {
-            return;
-        }
-        let rot = Quaternion::look_at(p, up);
-        self.orientation = self.orientation.nlerp(rot, delta_time);
+    pub fn look_at(&mut self, p: Vector3<f32>, up: Vector3<f32>, delta_time: f32) {
+        let dir = (p - self.translation).normalize();
+        let rot = Quaternion::look_at(dir, up);
+        self.orientation = rot;
+        // FIXME: do something with delta_time
+        let _ = delta_time;
     }
 
-    fn slide_curve(&mut self, direction: Movement, delta_time: f32) {
+    pub fn slide_curve(&mut self, direction: Movement, delta_time: f32) {
         self.translation = self.curve.slide(self.translation, direction, delta_time);
     }
 }
@@ -154,9 +162,12 @@ impl SceneObject for ModelPosition {
         glfw::Key::R, glfw::Action::Press =>
                 self.scale_up(delta_time),
                 self.scale_down(delta_time),
+        glfw::Key::G, glfw::Action::Press =>
+                self.look_at(vec3(0., 0., 0.), vec3(0., 1., 0.), delta_time),
+                self.look_at(vec3(0., 2., 0.), vec3(0., 1., 0.), delta_time),
         glfw::Key::V, glfw::Action::Press =>
-                self.rotate_around(vec3(0.,0.,0.), delta_time),
-                self.rotate_around(vec3(5.,0.,0.), delta_time),
+                self.rotate_around(Movement::ForwardY, vec3(0., 0., 0.), delta_time),
+                self.rotate_around(Movement::BackwardY, vec3(0., 0., 0.), delta_time),
         glfw::Key::Z, glfw::Action::Press =>
                 self.rotate(Movement::ForwardZ, delta_time),
                 self.rotate(Movement::BackwardZ, delta_time),

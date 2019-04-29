@@ -1,82 +1,84 @@
-use crate::scene::SceneObject;
-
-use cgmath::{
-    self,
-    prelude::{InnerSpace, Zero},
-    vec3,
+use crate::{
+    model_pos::{ModelPosition, Movement},
+    scene::SceneObject,
 };
+
+use cgmath::{self, vec3};
 
 type Point3 = cgmath::Point3<f32>;
 type Vector3 = cgmath::Vector3<f32>;
 type Matrix4 = cgmath::Matrix4<f32>;
+type Quaternion = cgmath::Quaternion<f32>;
 
-// Defines several possible options for camera movement. Used as abstraction to
-// stay away from window-system specific input methods
-#[derive(PartialEq, Clone, Copy)]
-pub enum CameraMovement {
-    FORWARD,
-    BACKWARD,
-    LEFT,
-    RIGHT,
-}
-use self::CameraMovement::*;
-
-// Default camera values
-const YAW: f32 = -90.;
-const PITCH: f32 = 0.;
-const SPEED: f32 = 8.;
-const SENSITIVTY: f32 = 0.1;
+const SENSITIVITY: f32 = 0.005;
 const ZOOM: f32 = 45.;
+const FRONT_BASE: Vector3 = Vector3 {
+    x: 0.,
+    y: 0.,
+    z: 1.,
+};
+const WORLD_UP: Vector3 = Vector3 {
+    x: 0.,
+    y: 1.,
+    z: 0.,
+};
 
+#[derive(Debug)]
 pub struct Camera {
-    // Camera Attributes
-    pub position: Point3,
-    pub front: Vector3,
-    pub up: Vector3,
-    pub right: Vector3,
-    pub world_up: Vector3,
-    // Euler Angles
-    pub yaw: f32,
-    pub pitch: f32,
-    // Camera options
-    pub movement_speed: f32,
-    pub mouse_sensitivity: f32,
     pub zoom: f32,
+    pub sensitivity: f32,
+    pub model_pos: ModelPosition,
+    pub debug_pressed: bool,
 }
 
 impl Default for Camera {
     fn default() -> Camera {
-        let mut camera = Camera {
-            position: Point3::new(0., 0., 0.),
-            front: vec3(0., 0., -1.),
-            up: Vector3::zero(),    // initialized later
-            right: Vector3::zero(), // initialized later
-            world_up: Vector3::unit_y(),
-            yaw: YAW,
-            pitch: PITCH,
-            movement_speed: SPEED,
-            mouse_sensitivity: SENSITIVTY,
+        let camera = Camera {
             zoom: ZOOM,
+            sensitivity: SENSITIVITY,
+            model_pos: ModelPosition::default(),
+            debug_pressed: false,
         };
-        camera.update_camera_vectors();
         camera
     }
 }
 
 impl SceneObject for Camera {
     fn process_input(&mut self, window: &glfw::Window, delta_time: f32) {
-        if window.get_key(glfw::Key::Up) == glfw::Action::Press {
-            self.process_keyboard(FORWARD, delta_time);
-        }
-        if window.get_key(glfw::Key::Down) == glfw::Action::Press {
-            self.process_keyboard(BACKWARD, delta_time);
-        }
-        if window.get_key(glfw::Key::Left) == glfw::Action::Press {
-            self.process_keyboard(LEFT, delta_time);
-        }
-        if window.get_key(glfw::Key::Right) == glfw::Action::Press {
-            self.process_keyboard(RIGHT, delta_time);
-        }
+        let point = vec3(0., 0., 0.);
+
+        // // Control camera as model;
+        // self.model_pos.is_selected = true;
+        // self.model_pos.process_input(window, delta_time);
+
+        process_keys!(
+        window;
+        glfw::Key::Up, glfw::Action::Press =>
+            self.model_pos.rotate_around(Movement::BackwardX, point, delta_time),
+            self.model_pos.slide(Movement::BackwardZ, delta_time),
+        glfw::Key::Down, glfw::Action::Press =>
+            self.model_pos.rotate_around(Movement::ForwardX, point, delta_time),
+            self.model_pos.slide(Movement::ForwardZ, delta_time),
+        glfw::Key::Left, glfw::Action::Press =>
+            self.model_pos.rotate_around(Movement::BackwardY, point, delta_time),
+            self.model_pos.slide(Movement::BackwardX, delta_time),
+        glfw::Key::Right, glfw::Action::Press =>
+            self.model_pos.rotate_around(Movement::ForwardY, point, delta_time),
+            self.model_pos.slide(Movement::ForwardX, delta_time)
+        );
+
+        process_keys!(
+        window;
+        glfw::Key::K, glfw::Action::Press =>
+            self.model_pos.look_at(point, WORLD_UP, delta_time),
+        glfw::Key::J, glfw::Action::Release => self.debug_pressed = false,
+        glfw::Key::J, glfw::Action::Press => {
+            if self.debug_pressed == false {
+                self.debug_pressed = true;
+                println!("Model_pos: {:#?}", self);
+                println!("Delta time: {:#?}", delta_time);
+            }
+        });
     }
 }
 
@@ -84,54 +86,30 @@ impl Camera {
     /// Returns the view matrix calculated using Eular Angles and the LookAt
     /// Matrix
     pub fn get_view_matrix(&self) -> Matrix4 {
-        Matrix4::look_at(self.position, self.position + self.front, self.up)
+        let rmat = Matrix4::from(self.model_pos.orientation);
+        let tmat = Matrix4::from_translation(-self.model_pos.translation);
+        rmat * tmat
     }
 
-    /// Processes input received from any keyboard-like input system. Accepts
-    /// input parameter in the form of camera defined ENUM (to abstract it from
-    /// windowing systems)
-    pub fn process_keyboard(&mut self, direction: CameraMovement, delta_time: f32) {
-        let velocity = self.movement_speed * delta_time;
-        if direction == FORWARD {
-            self.position += self.front * velocity;
-        }
-        if direction == BACKWARD {
-            self.position += -(self.front * velocity);
-        }
-        if direction == LEFT {
-            self.position += -(self.right * velocity);
-        }
-        if direction == RIGHT {
-            self.position += self.right * velocity;
-        }
-    }
+    pub fn process_mouse_movement(&mut self, xoffset: f32, yoffset: f32, constrain_pitch: bool) {
+        self.model_pos
+            .rotate(Movement::ForwardX, -yoffset * self.sensitivity);
+        self.model_pos
+            .rotate(Movement::ForwardY, xoffset * self.sensitivity);
 
-    /// Processes input received from a mouse input system. Expects the offset
-    /// value in both the x and y direction.
-    pub fn process_mouse_movement(
-        &mut self,
-        mut xoffset: f32,
-        mut yoffset: f32,
-        constrain_pitch: bool,
-    ) {
-        xoffset *= self.mouse_sensitivity;
-        yoffset *= self.mouse_sensitivity;
-
-        self.yaw += xoffset;
-        self.pitch += yoffset;
+        // Ensure z orientation dones't get messedup by normalization error;
+        self.model_pos.orientation.v.z = 0.;
 
         // Make sure that when pitch is out of bounds, screen doesn't get flipped
         if constrain_pitch {
-            if self.pitch > 89. {
-                self.pitch = 89.;
-            }
-            if self.pitch < -89. {
-                self.pitch = -89.;
-            }
+            // FIXME constrain quaternion to 90º
+            // if self.pitch > 89. {
+            //     self.pitch = 89.;
+            // }
+            // if self.pitch < -89. {
+            //     self.pitch = -89.;
+            // }
         }
-
-        // Update Front, Right and Up Vectors using the updated Eular angles
-        self.update_camera_vectors();
     }
 
     // Processes input received from a mouse scroll-wheel event. Only requires input
@@ -146,20 +124,5 @@ impl Camera {
         if self.zoom >= 45. {
             self.zoom = 45.;
         }
-    }
-
-    /// Calculates the front vector from the Camera's (updated) Eular Angles
-    fn update_camera_vectors(&mut self) {
-        // Calculate the new Front vector
-        let front = Vector3 {
-            x: self.yaw.to_radians().cos() * self.pitch.to_radians().cos(),
-            y: self.pitch.to_radians().sin(),
-            z: self.yaw.to_radians().sin() * self.pitch.to_radians().cos(),
-        };
-        self.front = front.normalize();
-        // Also re-calculate the Right and Up vector
-        self.right = self.front.cross(self.world_up).normalize(); // Normalize the vectors, because their length gets closer to 0 the more you
-                                                                  // look up or down which results in slower movement.
-        self.up = self.right.cross(self.front).normalize();
     }
 }
