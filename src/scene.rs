@@ -20,6 +20,9 @@ pub struct Scene {
     shader: Shader,
     model: Model,
     models: Vec<ModelPosition>,
+
+    axis_m: Model,
+    axis_p: ModelPosition,
 }
 
 pub trait SceneObject {
@@ -82,6 +85,9 @@ impl Scene {
             (our_shader, our_model)
         };
 
+        let axis_m = Model::new("resources/objects/axis_arrows/axis_arrows.obj");
+        let axis_p = ModelPosition::default();
+
         let mut x_offset = 0.;
         let mut models: Vec<_> = std::iter::repeat(ModelPosition::default())
             .take(n_models)
@@ -105,6 +111,9 @@ impl Scene {
             shader,
             model,
             models,
+
+            axis_m,
+            axis_p,
         })
     }
 
@@ -153,6 +162,8 @@ impl Scene {
                     self.shader.set_mat4(c_str!("model"), &m.matrix());
                     self.model.draw(&self.shader);
                 });
+                self.shader.set_mat4(c_str!("model"), &self.axis_p.matrix());
+                self.axis_m.draw(&self.shader);
             }
 
             // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved
