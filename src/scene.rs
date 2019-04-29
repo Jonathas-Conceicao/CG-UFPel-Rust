@@ -6,7 +6,7 @@ use glfw::{self, Context};
 use cgmath::{perspective, Deg, Matrix4, Point3};
 use failure::ensure;
 
-use std::sync::mpsc::Receiver;
+use std::{path::Path, sync::mpsc::Receiver};
 
 pub struct Scene {
     glfw: glfw::Glfw,
@@ -30,7 +30,15 @@ pub trait SceneObject {
 }
 
 impl Scene {
-    pub fn init(wscreen: u32, hscreen: u32, n_models: usize) -> Result<Self, failure::Error> {
+    pub fn init<P>(
+        wscreen: u32,
+        hscreen: u32,
+        n_models: usize,
+        models_config: P,
+    ) -> Result<Self, failure::Error>
+    where
+        P: AsRef<Path>,
+    {
         ensure!(
             n_models > 0 && n_models < 10,
             "Number of models should be bigger than 0 and lower than 10"
@@ -89,7 +97,7 @@ impl Scene {
         let axis_p = ModelPosition::default();
 
         let mut x_offset = 0.;
-        let mut models: Vec<_> = std::iter::repeat(ModelPosition::default())
+        let mut models: Vec<_> = std::iter::repeat(ModelPosition::with_config(models_config)?)
             .take(n_models)
             .map(|mut m| {
                 m.translation.x = x_offset;

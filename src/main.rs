@@ -1,5 +1,6 @@
 use cg_ufpel_project;
 
+use std::path::PathBuf;
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -9,16 +10,24 @@ use structopt::StructOpt;
     about = "OpenGL project in Rust"
 )]
 struct Opt {
+    #[structopt(short = "w", long = "width", default_value = "800")]
+    scr_width: u32,
+    #[structopt(short = "h", long = "height", default_value = "600")]
+    scr_height: u32,
     #[structopt(short = "m", long = "models", default_value = "1")]
     n_models: usize,
+    #[structopt(
+        short = "c",
+        long = "config",
+        default_value = "configs/model_config.json"
+    )]
+    config: PathBuf,
 }
-
-const SCR_WIDTH: u32 = 800;
-const SCR_HEIGHT: u32 = 600;
 
 pub fn run() -> Result<(), failure::Error> {
     let opt = Opt::from_args();
-    let mut scene = cg_ufpel_project::Scene::init(SCR_WIDTH, SCR_HEIGHT, opt.n_models)?;
+    let mut scene =
+        cg_ufpel_project::Scene::init(opt.scr_width, opt.scr_height, opt.n_models, opt.config)?;
     scene.run()
 }
 

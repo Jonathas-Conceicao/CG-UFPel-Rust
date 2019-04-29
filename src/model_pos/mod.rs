@@ -1,16 +1,15 @@
+use cgmath::{vec3, Deg, Matrix4, Quaternion, Rotation, Rotation3, Vector3};
+use glfw;
+use std::path::Path;
+
 mod animation;
+mod config;
 mod curve;
 
 use crate::scene::SceneObject;
 use animation::Animation;
+pub use config::Configuration;
 use curve::CurveControl;
-
-use cgmath::{vec3, Deg, Matrix4, Quaternion, Rotation, Rotation3, Vector3};
-use glfw;
-
-const BASE_SPEED: f32 = 8.;
-const ROT_SPEED: f32 = 30.;
-const SCALE_SPEED: f32 = 2.;
 
 #[derive(Clone, Debug)]
 pub struct ModelPosition {
@@ -18,6 +17,7 @@ pub struct ModelPosition {
     pub translation: Vector3<f32>,
     pub scale: f32,
     pub is_selected: bool,
+    pub config: Configuration,
 
     curve: CurveControl,
     animation: Animation,
@@ -34,7 +34,33 @@ enum Movement {
     BackwardZ,
 }
 
+impl Default for ModelPosition {
+    fn default() -> Self {
+        ModelPosition {
+            orientation: Quaternion::from_sv(1., vec3(0., 0., 0.)),
+            translation: vec3(0., 0., 0.),
+            scale: 1.,
+
+            is_selected: false,
+            config: Configuration::default(),
+
+            debug_pressed: false,
+            curve: CurveControl::default(),
+            animation: Animation::default(),
+        }
+    }
+}
+
 impl ModelPosition {
+    pub fn with_config<P>(path: P) -> Result<ModelPosition, failure::Error>
+    where
+        P: AsRef<Path>,
+    {
+        let mut m = ModelPosition::default();
+        m.config = Configuration::from_path(path)?;
+        Ok(m)
+    }
+
     pub fn matrix(&self) -> Matrix4<f32> {
         let tmat = Matrix4::from_translation(self.translation);
         let omat = Matrix4::from(self.orientation);
@@ -43,15 +69,15 @@ impl ModelPosition {
     }
 
     fn scale_up(&mut self, delta_time: f32) {
-        self.scale += SCALE_SPEED * delta_time;
+        self.scale += self.config.scale_speed * delta_time;
     }
 
     fn scale_down(&mut self, delta_time: f32) {
-        self.scale -= SCALE_SPEED * delta_time;
+        self.scale -= self.config.scale_speed * delta_time;
     }
 
     fn slide(&mut self, direction: Movement, delta_time: f32) {
-        let step = BASE_SPEED * delta_time;
+        let step = self.config.base_speed * delta_time;
         match direction {
             Movement::ForwardX => self.translation.x += step,
             Movement::BackwardX => self.translation.x -= step,
@@ -64,7 +90,7 @@ impl ModelPosition {
     }
 
     fn rotate(&mut self, direction: Movement, delta_time: f32) {
-        let step = Deg(ROT_SPEED * delta_time);
+        let step = Deg(self.config.rotation_speed * delta_time);
         let rot = match direction {
             Movement::ForwardX => Quaternion::from_angle_x(step),
             Movement::BackwardX => Quaternion::from_angle_x(-step),
@@ -77,7 +103,7 @@ impl ModelPosition {
     }
 
     fn rotate_around(&mut self, p: Vector3<f32>, delta_time: f32) {
-        let rot = Quaternion::from_angle_y(Deg(ROT_SPEED * 2. * delta_time));
+        let rot = Quaternion::from_angle_y(Deg(self.config.circle_speed * delta_time));
         self.translation = rot * (self.translation - p) + p;
     }
 
@@ -92,21 +118,6 @@ impl ModelPosition {
 
     fn slide_curve(&mut self, direction: Movement, delta_time: f32) {
         self.translation = self.curve.slide(self.translation, direction, delta_time);
-    }
-}
-
-impl Default for ModelPosition {
-    fn default() -> Self {
-        ModelPosition {
-            orientation: Quaternion::from_sv(1., vec3(0., 0., 0.)),
-            translation: vec3(0., 0., 0.),
-            scale: 1.,
-            is_selected: false,
-
-            debug_pressed: false,
-            curve: CurveControl::default(),
-            animation: Animation::default(),
-        }
     }
 }
 
