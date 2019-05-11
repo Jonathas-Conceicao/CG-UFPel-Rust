@@ -138,11 +138,19 @@ impl ModelPosition {
     }
 
     pub fn look_at(&mut self, p: Vector3<f32>, up: Vector3<f32>, delta_time: f32) {
-        let dir = (p - self.translation).normalize();
-        let rot = Quaternion::look_at(dir, up);
-        self.orientation = rot;
-        // FIXME: do something with delta_time
+        // Quaternion::look_at currenty used rh system;
+        // https://github.com/rustgd/cgmath/issues/448
+        // so we need to correct the orientation with two steps
+        //   (1) invert the look_at direction;
+        //   (2) invert the resulting quaternion vector;
+        let dir = p - self.translation;
+        let rot = Quaternion::look_at(-dir, up);
+        let rot = Quaternion::from_sv(rot.s, -rot.v);
+
+        // delta_time is not currently used because we want the look at to be abrupt
         let _ = delta_time;
+
+        self.orientation = rot;
     }
 
     pub fn slide_curve(&mut self, direction: Movement, delta_time: f32) {
