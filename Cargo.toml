@@ -1,14 +1,23 @@
 [package]
-name = "opengl-hello_world"
+name = "cg_ufpel_project"
 version = "0.1.0"
 authors = ["Jonathas-Conceicao <jadoliveira@inf.ufpel.edu.br>"]
+license = "GPL-3.0"
 edition = "2018"
 
 [dependencies]
 cgmath = "0.16"
+failure = "0.1"
 gl = "0.10"
 glfw = "0.23"
 image = "0.19"
-tobj = "0.1"
 num = "0.2"
+serde = { version = "1", features = ["derive"]}
+serde_json = "1"
+splines = { version = "0.2", features = ["impl-cgmath"] }
+structopt = "0.2"
 rand = "0.5"
+tobj = "0.1"
+
+[dev-dependencies]
+pretty_assertions = "0.6"
