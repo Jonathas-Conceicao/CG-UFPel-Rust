@@ -8,5 +8,6 @@
       [ ["ScaleU",  0.2]
       , ["SlideXF", 0.5]
       , ["SlideZB", 0.5]
+      , ["CurveZB", 1.5]
       ]
 }

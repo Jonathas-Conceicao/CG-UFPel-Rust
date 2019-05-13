@@ -1,4 +1,4 @@
-use cgmath::{vec3, Deg, InnerSpace, Matrix4, Quaternion, Rotation, Rotation3, Vector3};
+use cgmath::{vec3, Deg, Matrix4, Quaternion, Rotation, Rotation3, Vector3};
 use glfw;
 use std::path::Path;
 
@@ -17,9 +17,9 @@ pub struct ModelPosition {
     pub orientation: Quaternion<f32>,
     pub translation: Vector3<f32>,
     pub scale: f32,
+
     pub is_selected: bool,
     pub config: Configuration,
-
     curve: CurveControl,
     animation: Animation,
     debug_pressed: bool,
@@ -46,6 +46,13 @@ pub enum Command {
     SlideYB,
     SlideZF,
     SlideZB,
+
+    CurveXF,
+    CurveXB,
+    CurveYF,
+    CurveYB,
+    CurveZF,
+    CurveZB,
 
     RotateXF,
     RotateXB,
@@ -158,7 +165,7 @@ impl ModelPosition {
     }
 
     pub fn run_command(&mut self, c: Command, delta_time: f32) {
-        match dbg!(c) {
+        match c {
             Command::ScaleU => self.scale_up(delta_time),
             Command::ScaleD => self.scale_down(delta_time),
 
@@ -168,6 +175,13 @@ impl ModelPosition {
             Command::SlideYB => self.slide(Movement::BackwardY, delta_time),
             Command::SlideZF => self.slide(Movement::ForwardZ, delta_time),
             Command::SlideZB => self.slide(Movement::BackwardZ, delta_time),
+
+            Command::CurveXF => self.slide_curve(Movement::ForwardX, delta_time),
+            Command::CurveXB => self.slide_curve(Movement::BackwardX, delta_time),
+            Command::CurveYF => self.slide_curve(Movement::ForwardY, delta_time),
+            Command::CurveYB => self.slide_curve(Movement::BackwardY, delta_time),
+            Command::CurveZF => self.slide_curve(Movement::ForwardZ, delta_time),
+            Command::CurveZB => self.slide_curve(Movement::BackwardZ, delta_time),
 
             Command::RotateXF => self.rotate(Movement::ForwardX, delta_time),
             Command::RotateXB => self.rotate(Movement::BackwardX, delta_time),

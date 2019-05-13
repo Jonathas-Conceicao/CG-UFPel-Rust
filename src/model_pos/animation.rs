@@ -20,7 +20,7 @@ impl Animation {
             self.stop();
             return Vec::default();
         }
-        let mut delta_time = dbg!(delta_time);
+        let mut delta_time = delta_time;
         let mut vec = Vec::default();
         for (c, t) in &mut self.command_pool {
             if delta_time <= *t {
@@ -33,7 +33,7 @@ impl Animation {
             *t = 0.;
         }
         self.consume();
-        return dbg!(vec);
+        return vec;
     }
 
     fn consume(&mut self) {

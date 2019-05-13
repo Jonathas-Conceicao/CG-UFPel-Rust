@@ -86,7 +86,7 @@ impl Scene {
 
             // load models
             // -----------
-            let our_model = Model::new("resources/objects/rock/rock.obj");
+            let our_model = Model::new("resources/objects/axis_arrows/axis_arrows.obj");
 
             (our_shader, our_model)
         };

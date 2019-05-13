@@ -12,11 +12,6 @@ type Quaternion = cgmath::Quaternion<f32>;
 
 const SENSITIVITY: f32 = 0.005;
 const ZOOM: f32 = 45.;
-const FRONT_BASE: Vector3 = Vector3 {
-    x: 0.,
-    y: 0.,
-    z: 1.,
-};
 const WORLD_UP: Vector3 = Vector3 {
     x: 0.,
     y: 1.,
@@ -47,10 +42,6 @@ impl SceneObject for Camera {
     fn process_input(&mut self, window: &glfw::Window, delta_time: f32) {
         let point = vec3(0., 0., 0.);
 
-        // // Control camera as model;
-        // self.model_pos.is_selected = true;
-        // self.model_pos.process_input(window, delta_time);
-
         process_keys!(
         window;
         glfw::Key::Up, glfw::Action::Press =>
@@ -69,8 +60,9 @@ impl SceneObject for Camera {
 
         process_keys!(
         window;
-        glfw::Key::K, glfw::Action::Press =>
-            self.model_pos.look_at(point, WORLD_UP, delta_time),
+        glfw::Key::I, glfw::Action::Press => self.model_pos.orientation.s += 0.05,
+        glfw::Key::O, glfw::Action::Press => self.model_pos.orientation.s -= 0.05,
+        glfw::Key::K, glfw::Action::Press => self.model_pos.look_at(point, WORLD_UP, delta_time),
         glfw::Key::J, glfw::Action::Release => self.debug_pressed = false,
         glfw::Key::J, glfw::Action::Press => {
             if self.debug_pressed == false {
